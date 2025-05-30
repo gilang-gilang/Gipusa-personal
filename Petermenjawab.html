@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Peter Answers - Facebook Style</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;600&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f0f2f5;
+      color: #1c1e21;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      padding: 40px 0;
+    }
+
+    h1 {
+      font-weight: 600;
+      font-size: 2.5rem;
+      color: #1877f2;
+      margin-bottom: 30px;
+      user-select: none;
+    }
+
+    .language-switcher {
+      position: fixed;
+      top: 15px;
+      right: 15px;
+    }
+
+    .language-switcher button {
+      background: none;
+      border: none;
+      color: #1877f2;
+      font-weight: 600;
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 0.9rem;
+      transition: color 0.3s;
+      padding: 6px 10px;
+      border-radius: 4px;
+    }
+
+    .language-switcher button:hover {
+      background-color: #e7f3ff;
+      color: #165ecc;
+    }
+
+    .form-container {
+      background: white;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
+      border-radius: 8px;
+      padding: 30px 35px;
+      width: 360px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    input[type="text"] {
+      font-size: 1rem;
+      padding: 12px 14px;
+      margin-bottom: 15px;
+      border: 1px solid #dddfe2;
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: #1877f2;
+      box-shadow: 0 0 5px #1877f2aa;
+    }
+
+    button {
+      background-color: #1877f2;
+      color: white;
+      font-weight: 600;
+      border: none;
+      padding: 12px 0;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #165ecc;
+    }
+
+    #response {
+      margin-top: 20px;
+      font-style: italic;
+      color: #606770;
+      min-height: 24px;
+      text-align: center;
+    }
+
+    #refreshBtn {
+      background-color: #42b72a;
+      margin-top: 25px;
+    }
+
+    #refreshBtn:hover {
+      background-color: #36a420;
+    }
+
+    .note {
+      margin-top: 40px;
+      max-width: 600px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+      font-size: 0.95rem;
+      color: #333;
+      line-height: 1.5;
+    }
+
+    footer {
+      margin-top: 50px;
+      font-size: 0.85rem;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div class="language-switcher">
+    <button onclick="setLanguage('en')">English</button>
+    <button onclick="setLanguage('id')">Bahasa Indonesia</button>
+  </div>
+
+  <h1 id="title">Peter Answers</h1>
+
+  <div class="form-container">
+    <input id="petition" type="text" placeholder="Type petition here" autocomplete="off" />
+    <input id="question" type="text" placeholder="Type your question here" autocomplete="off" />
+    <button onclick="submitQuestion()" id="askBtn">Ask Peter</button>
+    <div id="response"></div>
+    <button id="refreshBtn" onclick="refreshPage()">Refresh</button>
+  </div>
+
+  <div class="note" id="note">
+    <strong>Tentang Aplikasi Ini:</strong><br>
+    Aplikasi ini adalah versi web dari "Peter Answers", sebuah permainan tebak-tebakan yang dapat digunakan untuk menghibur teman. Setelah mengetik petisi, kamu bisa memasukkan pertanyaan dan Peter akan memberikan jawaban yang mengejutkan. Cocok untuk bersenang-senang dan membuat penasaran teman-temanmu!
+  </div>
+
+  <footer>
+    &copy; 2025 Gilang Putra Sadewa. All rights reserved.
+  </footer>
+
+  <script>
+    let secretAnswer = "";
+    let visiblePetition = "";
+    let typingSecret = false;
+    let lang = "en";
+
+    const petitionInput = document.getElementById("petition");
+
+    const petitions = {
+      en: "Peter, please answer the following question",
+      id: "Peter, tolong jawab pertanyaan berikut",
+    };
+
+    const notes = {
+      en: `<strong>About This App:</strong><br>
+        This app is a web version of "Peter Answers", a fun mind-reading trick to amaze your friends. Just type the petition, then enter a question, and Peter will seem to magically reveal the answer. Great for entertainment and surprising others!`,
+      id: `<strong>Tentang Aplikasi Ini:</strong><br>
+        Aplikasi ini adalah versi web dari "Peter Answers", sebuah permainan tebak-tebakan yang dapat digunakan untuk menghibur teman. Setelah mengetik petisi, kamu bisa memasukkan pertanyaan dan Peter akan memberikan jawaban yang mengejutkan. Cocok untuk bersenang-senang dan membuat penasaran teman-temanmu!`
+    };
+
+    petitionInput.addEventListener("keydown", function (e) {
+      if (e.key === "." && !typingSecret) {
+        e.preventDefault();
+        typingSecret = true;
+        secretAnswer = "";
+        visiblePetition = "";
+        petitionInput.value = "";
+      } else if (
+        typingSecret &&
+        e.key.length === 1 &&
+        !e.ctrlKey &&
+        !e.metaKey
+      ) {
+        e.preventDefault();
+        secretAnswer += e.key;
+
+        const fullText = petitions[lang];
+        visiblePetition = fullText.substring(0, secretAnswer.length);
+        petitionInput.value = visiblePetition;
+      }
+    });
+
+    function submitQuestion() {
+      const question = document.getElementById("question").value;
+      const responseText =
+        typingSecret && secretAnswer
+          ? secretAnswer
+          : lang === "id"
+          ? "Peter tidak tahu jawabannya."
+          : "Peter doesn't know the answer.";
+      document.getElementById("response").innerText = responseText;
+
+      secretAnswer = "";
+      typingSecret = false;
+    }
+
+    function refreshPage() {
+      document.getElementById("petition").value = "";
+      document.getElementById("question").value = "";
+      document.getElementById("response").innerText = "";
+      secretAnswer = "";
+      typingSecret = false;
+    }
+
+    function setLanguage(language) {
+      lang = language;
+      document.getElementById("title").innerText =
+        language === "id" ? "Peter Menjawab" : "Peter Answers";
+      document.getElementById("petition").placeholder =
+        language === "id" ? "Ketik petisi di sini" : "Type petition here";
+      document.getElementById("question").placeholder =
+        language === "id" ? "Ketik pertanyaanmu di sini" : "Type your question here";
+      document.getElementById("askBtn").innerText =
+        language === "id" ? "Tanya Peter" : "Ask Peter";
+      document.getElementById("note").innerHTML = notes[language];
+    }
+  </script>
+</body>
+</html>
